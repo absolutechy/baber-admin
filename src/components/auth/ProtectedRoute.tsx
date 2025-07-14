@@ -10,3 +10,8 @@ export default function ProtectedRoute() {
 
   return <Outlet />;
 } 
+//Checks if a user is authenticated
+
+//Either allows access to the requested page OR
+
+//Redirects to a login page if not authenticated

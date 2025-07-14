@@ -5,8 +5,12 @@ import { AuthContext, type User } from './AuthContext.types';
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const isAuthenticated = !!user;
+//state management tracking user if he or she is logged in or logged out 
 
+
+  
   // Check for existing user on initial load
+  //using local storage to remember login between page refreshes
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
@@ -48,8 +52,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
+    //makes all this avaiable to child compoenets 
     <AuthContext.Provider value={{ user, isAuthenticated, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
 } 
+//this code is implementing an authentication system for our admin panel ! using context API 
+// context in react ? is a way to share data that can be considered global ! 
+//solves the problem of prop drilling where you have to pass props through many levels of components 
