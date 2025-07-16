@@ -18,7 +18,7 @@ export default function Layout() {
   return (
     <div className="min-h-screen bg-gray-100">
       <Sidebar isSidebarOpen={isSidebarOpen} isCollapsed={isSidebarCollapsed} />
-      <div className={`flex flex-col ${isSidebarCollapsed ? 'md:pl-20' : 'md:pl-64'} transition-all duration-300`}>
+      <div className={`flex flex-col ${isSidebarCollapsed ? 'md:pl-20' : 'md:pl-72'} transition-all duration-300`}>
         <Navbar toggleMobileSidebar={toggleMobileSidebar} toggleSidebar={toggleSidebar} isSidebarCollapsed={isSidebarCollapsed} />
         <main className="flex-1 p-6 lg:px-8">
           <div className="mx-auto max-w-7xl">
