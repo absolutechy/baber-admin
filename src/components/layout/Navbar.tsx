@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { 
   Bars3Icon, 
@@ -16,6 +17,23 @@ interface NavbarProps {
 export default function Navbar({ toggleMobileSidebar, toggleSidebar, isSidebarCollapsed }: NavbarProps) {
   const { user, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleSettingsClick = () => {
+    navigate('/settings');
+    setDropdownOpen(false);
+  };
+
+  const handleProfileClick = () => {
+    // Since you don't have a profile page, we'll create a simple one or redirect to settings
+    navigate('/profile'); // You can change this to '/profile' if you create a profile page
+    setDropdownOpen(false);
+  };
+
+  const handleLogout = () => {
+    logout();
+    setDropdownOpen(false);
+  };
 
   return (
     <nav className="bg-white border-b border-gray-200 px-4 py-2.5 lg:px-6 shadow-sm">
@@ -61,11 +79,21 @@ export default function Navbar({ toggleMobileSidebar, toggleSidebar, isSidebarCo
             
             {dropdownOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-200">
-                <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
-                <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Settings</a>
+                <button
+                  onClick={handleProfileClick}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Profile
+                </button>
+                <button
+                  onClick={handleSettingsClick}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Settings
+                </button>
                 <hr className="my-1" />
                 <button
-                  onClick={logout}
+                  onClick={handleLogout}
                   className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
                 >
                   Sign out
@@ -77,4 +105,4 @@ export default function Navbar({ toggleMobileSidebar, toggleSidebar, isSidebarCo
       </div>
     </nav>
   );
-} 
+}

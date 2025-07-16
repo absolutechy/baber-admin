@@ -9,3 +9,82 @@
     @apply bg-gray-50 text-gray-900;
   }
 }
+/* Theme variables */
+:root {
+  --primary-color: #f97316;
+  --primary-rgb: 249, 115, 22;
+  --orange-500: #f97316;
+  --orange-600: #ea580c;
+  --orange-700: #c2410c;
+}
+
+/* Light theme */
+.theme-light {
+  --bg-color: #ffffff;
+  --text-color: #1f2937;
+  --border-color: #e5e7eb;
+}
+
+/* Dark theme */
+.theme-dark {
+  --bg-color: #1f2937;
+  --text-color: #f9fafb;
+  --border-color: #374151;
+}
+
+/* Apply theme colors to body */
+body {
+  background-color: var(--bg-color, #ffffff);
+  color: var(--text-color, #1f2937);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Override specific elements for theming */
+.theme-dark .bg-white {
+  background-color: #374151 !important;
+}
+
+.theme-dark .text-gray-900 {
+  color: #f9fafb !important;
+}
+
+.theme-dark .text-gray-700 {
+  color: #d1d5db !important;
+}
+
+.theme-dark .text-gray-500 {
+  color: #9ca3af !important;
+}
+
+.theme-dark .border-gray-200 {
+  border-color: #4b5563 !important;
+}
+
+.theme-dark .border-gray-300 {
+  border-color: #6b7280 !important;
+}
+
+.theme-dark .bg-gray-50 {
+  background-color: #4b5563 !important;
+}
+
+/* Dynamic primary color for buttons */
+.bg-orange-600 {
+  background-color: var(--orange-600) !important;
+}
+
+.hover\:bg-orange-700:hover {
+  background-color: var(--orange-700) !important;
+}
+
+.text-orange-600 {
+  color: var(--orange-600) !important;
+}
+
+.border-orange-500 {
+  border-color: var(--orange-500) !important;
+}
+
+.focus\:ring-orange-500:focus {
+  --tw-ring-color: var(--orange-500);
+}

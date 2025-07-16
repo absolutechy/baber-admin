@@ -1,5 +1,18 @@
 import { useState } from 'react';
 import { Modal, Alert, Button, Input, SearchInput, Select, Badge, Card } from '../components/common';
+import { 
+  CalendarIcon, 
+  ClockIcon, 
+  UserIcon, 
+  CheckCircleIcon,
+  XCircleIcon,
+  ExclamationCircleIcon,
+  EyeSlashIcon,
+  PlusIcon,
+  PencilIcon,
+  TrashIcon,
+  FunnelIcon
+} from '@heroicons/react/24/outline';
 
 interface Appointment {
   id: string;
@@ -68,7 +81,7 @@ export default function Appointments() {
       date: '2023-07-01',
       time: '1:30 PM',
       duration: 60,
-      status: 'confirmed',
+      status: 'completed',
       staffName: 'Jessica Lee',
       price: 50,
     },
@@ -80,7 +93,7 @@ export default function Appointments() {
       date: '2023-07-02',
       time: '2:00 PM',
       duration: 30,
-      status: 'confirmed',
+      status: 'cancelled',
       staffName: 'Mike Smith',
       price: 30,
     },
@@ -92,7 +105,7 @@ export default function Appointments() {
       date: '2023-07-02',
       time: '3:30 PM',
       duration: 20,
-      status: 'confirmed',
+      status: 'no-show',
       staffName: 'Jessica Lee',
       price: 20,
     },
@@ -177,6 +190,7 @@ export default function Appointments() {
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('cards');
   const [isAddAppointmentModalOpen, setIsAddAppointmentModalOpen] = useState(false);
   const [isEditAppointmentModalOpen, setIsEditAppointmentModalOpen] = useState(false);
   const [appointmentToEdit, setAppointmentToEdit] = useState<string | null>(null);
@@ -219,7 +233,6 @@ export default function Appointments() {
   const getAvailableStaff = (serviceId: string) => {
     const service = getServiceById(serviceId);
     
-    // If no service selected, show all staff
     if (!service) {
       return [
         { value: '', label: 'Select a staff member' },
@@ -230,7 +243,6 @@ export default function Appointments() {
       ];
     }
 
-    // Filter staff based on service category
     const filteredStaff = staffMembers.filter(staff => {
       switch (service.category) {
         case 'haircut':
@@ -244,7 +256,6 @@ export default function Appointments() {
       }
     });
 
-    // Return staff options with default option
     return [
       { value: '', label: `Select staff for ${service.name}` },
       ...filteredStaff.map(staff => ({
@@ -256,13 +267,12 @@ export default function Appointments() {
 
   const handleServiceChange = (serviceId: string) => {
     if (!serviceId) {
-      // Reset appointment details if no service selected
       setNewAppointment({
         ...newAppointment,
         service: '',
         duration: 30,
         price: 0,
-        staffName: '', // Reset staff selection when service changes
+        staffName: '',
       });
       return;
     }
@@ -274,19 +284,18 @@ export default function Appointments() {
         service: service.name,
         duration: service.duration,
         price: service.price,
-        staffName: '', // Reset staff selection when service changes
+        staffName: '',
       });
     }
   };
 
-  // Filter appointments based on search term, date, and status
+  // Filter appointments
   const filteredAppointments = appointments.filter((appointment) => {
     const matchesSearch =
       appointment.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       appointment.service.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesDate = dateFilter === 'all' || appointment.date === dateFilter;
-    
     const matchesStatus = statusFilter === 'all' || appointment.status === statusFilter;
     
     return matchesSearch && matchesDate && matchesStatus;
@@ -295,13 +304,11 @@ export default function Appointments() {
   // Get unique dates for the date filter
   const uniqueDates = Array.from(new Set(appointments.map((appointment) => appointment.date)));
 
-  // Create options for date filter
   const dateOptions = [
     { value: 'all', label: 'All Dates' },
     ...uniqueDates.map(date => ({ value: date, label: date }))
   ];
 
-  // Create options for status filter
   const statusOptions = [
     { value: 'all', label: 'All Statuses' },
     { value: 'confirmed', label: 'Confirmed' },
@@ -310,7 +317,6 @@ export default function Appointments() {
     { value: 'no-show', label: 'No Show' }
   ];
 
-  // Create options for appointment status in edit modal
   const appointmentStatusOptions = [
     { value: 'confirmed', label: 'Confirmed' },
     { value: 'cancelled', label: 'Cancelled' },
@@ -326,7 +332,6 @@ export default function Appointments() {
   };
 
   const handleAddAppointment = () => {
-    // Basic validation
     if (!newAppointment.clientName || !newAppointment.service || !newAppointment.date || !newAppointment.time || !newAppointment.staffName) {
       showAlert('error', 'Please fill all required fields.');
       return;
@@ -371,7 +376,6 @@ export default function Appointments() {
   };
 
   const handleEditAppointment = () => {
-    // Validate form
     if (!editAppointment.service.trim()) {
       showAlert('error', 'Service is required');
       return;
@@ -389,7 +393,6 @@ export default function Appointments() {
 
     if (!appointmentToEdit) return;
 
-    // In a real app, this would make an API call
     setAppointments(appointments.map(appointment => {
       if (appointment.id === appointmentToEdit) {
         return {
@@ -426,6 +429,21 @@ export default function Appointments() {
     }
   };
 
+  const getStatusIcon = (status: Appointment['status']) => {
+    switch (status) {
+      case 'confirmed':
+        return <CheckCircleIcon className="w-4 h-4" />;
+      case 'cancelled':
+        return <XCircleIcon className="w-4 h-4" />;
+      case 'completed':
+        return <CheckCircleIcon className="w-4 h-4" />;
+      case 'no-show':
+        return <EyeSlashIcon className="w-4 h-4" />;
+      default:
+        return <ExclamationCircleIcon className="w-4 h-4" />;
+    }
+  };
+
   const getStatusLabel = (status: Appointment['status']) => {
     switch (status) {
       case 'confirmed':
@@ -441,156 +459,374 @@ export default function Appointments() {
     }
   };
 
+  // Calculate stats
+  const totalAppointments = appointments.length;
+  const confirmedAppointments = appointments.filter(a => a.status === 'confirmed').length;
+  const completedAppointments = appointments.filter(a => a.status === 'completed').length;
+  const totalRevenue = appointments.filter(a => a.status === 'completed').reduce((sum, a) => sum + a.price, 0);
+
   return (
-    <div className="space-y-6">
-      {/* Page header */}
-      <div className="pb-5 border-b border-gray-200 sm:flex sm:items-center sm:justify-between">
-        <h3 className="text-2xl font-bold leading-6 text-gray-900">Appointments</h3>
-        <div className="mt-3 sm:mt-0 sm:ml-4 flex items-center space-x-3">
-          <div className="w-64">
-            <SearchInput
-              placeholder="Search appointments"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+    <div className="space-y-8">
+      {/* Page header with enhanced styling */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8 border border-blue-100">
+        <div className="sm:flex sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Appointments</h1>
+            <p className="text-gray-600">Manage your barbershop appointments efficiently</p>
           </div>
-          <Button 
-            onClick={() => setIsAddAppointmentModalOpen(true)}
-            icon={
-              <svg className="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-              </svg>
-            }
-          >
-            Add Appointment
-          </Button>
+          <div className="mt-6 sm:mt-0 flex items-center space-x-4">
+            <div className="w-80">
+              <SearchInput
+                placeholder="Search by client or service..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <Button 
+              onClick={() => setIsAddAppointmentModalOpen(true)}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg"
+              icon={<PlusIcon className="w-5 h-5" />}
+            >
+              New Appointment
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Select
-          label="Date"
-          options={dateOptions}
-          value={dateFilter}
-          onChange={setDateFilter}
-        />
-        <Select
-          label="Status"
-          options={statusOptions}
-          value={statusFilter}
-          onChange={setStatusFilter}
-        />
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-xl">
+          <div className="p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <CalendarIcon className="h-8 w-8 text-blue-100" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-blue-100 truncate">Total Appointments</dt>
+                  <dd className="text-3xl font-bold">{totalAppointments}</dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white border-0 shadow-xl">
+          <div className="p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <CheckCircleIcon className="h-8 w-8 text-green-100" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-green-100 truncate">Confirmed</dt>
+                  <dd className="text-3xl font-bold">{confirmedAppointments}</dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0 shadow-xl">
+          <div className="p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <CheckCircleIcon className="h-8 w-8 text-purple-100" />
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-purple-100 truncate">Completed</dt>
+                  <dd className="text-3xl font-bold">{completedAppointments}</dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0 shadow-xl">
+          <div className="p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <span className="text-2xl">💰</span>
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-orange-100 truncate">Revenue</dt>
+                  <dd className="text-3xl font-bold">${totalRevenue}</dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </Card>
       </div>
 
-      {/* Appointments table */}
-      <Card>
-        <div className="flex flex-col">
-          <div className="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-            <div className="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
-              <div className="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Client
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Service
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Date & Time
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Staff
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Price
-                      </th>
-                      <th scope="col" className="relative px-6 py-3">
-                        <span className="sr-only">Actions</span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredAppointments.map((appointment) => (
-                      <tr key={appointment.id}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="flex-shrink-0 h-10 w-10">
-                              <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-medium">
-                                {appointment.clientName.charAt(0).toUpperCase()}
-                              </div>
-                            </div>
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">{appointment.clientName}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{appointment.service}</div>
-                          <div className="text-sm text-gray-500">${appointment.price}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{appointment.date}</div>
-                          <div className="text-sm text-gray-500">{appointment.time} ({appointment.duration} min)</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {appointment.staffName}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <Badge variant={getStatusVariant(appointment.status)}>
-                            {getStatusLabel(appointment.status)}
-                          </Badge>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          ${appointment.price}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex justify-end space-x-2">
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              onClick={() => openEditAppointmentModal(appointment.id)}
-                            >
-                              Edit
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+      {/* Enhanced Filters */}
+      <Card className="shadow-lg border-0">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-2">
+              <FunnelIcon className="w-5 h-5 text-gray-400" />
+              <h3 className="text-lg font-semibold text-gray-900">Filters</h3>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-500">View:</span>
+              <button
+                onClick={() => setViewMode('cards')}
+                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                  viewMode === 'cards' 
+                    ? 'bg-blue-100 text-blue-700' 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Cards
+              </button>
+              <button
+                onClick={() => setViewMode('table')}
+                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                  viewMode === 'table' 
+                    ? 'bg-blue-100 text-blue-700' 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Table
+              </button>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <Select
+              label="Date"
+              options={dateOptions}
+              value={dateFilter}
+              onChange={setDateFilter}
+            />
+            <Select
+              label="Status"
+              options={statusOptions}
+              value={statusFilter}
+              onChange={setStatusFilter}
+            />
+            <div className="flex items-end">
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  setDateFilter('all');
+                  setStatusFilter('all');
+                  setSearchTerm('');
+                }}
+              >
+                Clear Filters
+              </Button>
             </div>
           </div>
         </div>
       </Card>
 
-      {/* Add Appointment Modal */}
+      {/* Appointments Display */}
+      {viewMode === 'cards' ? (
+        /* Card View */
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {filteredAppointments.map((appointment) => (
+            <Card key={appointment.id} className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-0 shadow-lg">
+              <div className="p-6">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
+                      {appointment.clientName.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">{appointment.clientName}</h3>
+                      <p className="text-sm text-gray-500">{appointment.service}</p>
+                    </div>
+                  </div>
+                  <Badge variant={getStatusVariant(appointment.status)} className="flex items-center gap-1">
+                    {getStatusIcon(appointment.status)}
+                    {getStatusLabel(appointment.status)}
+                  </Badge>
+                </div>
+
+                {/* Details */}
+                <div className="space-y-3">
+                  <div className="flex items-center text-sm text-gray-600">
+                    <CalendarIcon className="w-4 h-4 mr-2 text-gray-400" />
+                    {appointment.date}
+                  </div>
+                  <div className="flex items-center text-sm text-gray-600">
+                    <ClockIcon className="w-4 h-4 mr-2 text-gray-400" />
+                    {appointment.time} ({appointment.duration} min)
+                  </div>
+                  <div className="flex items-center text-sm text-gray-600">
+                    <UserIcon className="w-4 h-4 mr-2 text-gray-400" />
+                    {appointment.staffName}
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
+                  <span className="text-xl font-bold text-green-600">${appointment.price}</span>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openEditAppointmentModal(appointment.id)}
+                      className="hover:bg-blue-50 hover:border-blue-300"
+                    >
+                      <PencilIcon className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="hover:bg-red-50 hover:border-red-300 text-red-600"
+                    >
+                      <TrashIcon className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        /* Table View */
+        <Card className="shadow-lg border-0 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
+                <tr>
+                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Client
+                  </th>
+                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Service
+                  </th>
+                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Date & Time
+                  </th>
+                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Staff
+                  </th>
+                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Price
+                  </th>
+                  <th scope="col" className="relative px-6 py-4">
+                    <span className="sr-only">Actions</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredAppointments.map((appointment, index) => (
+                  <tr key={appointment.id} className={`hover:bg-gray-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}`}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-12 w-12">
+                          <div className="h-12 w-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
+                            {appointment.clientName.charAt(0).toUpperCase()}
+                          </div>
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-semibold text-gray-900">{appointment.clientName}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{appointment.service}</div>
+                      <div className="text-sm text-gray-500">{appointment.duration} minutes</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{appointment.date}</div>
+                      <div className="text-sm text-gray-500">{appointment.time}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{appointment.staffName}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <Badge variant={getStatusVariant(appointment.status)} className="flex items-center gap-1 w-fit">
+                        {getStatusIcon(appointment.status)}
+                        {getStatusLabel(appointment.status)}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-bold text-green-600">${appointment.price}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex justify-end space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openEditAppointmentModal(appointment.id)}
+                          className="hover:bg-blue-50 hover:border-blue-300"
+                        >
+                          <PencilIcon className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="hover:bg-red-50 hover:border-red-300 text-red-600"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
+
+      {/* Empty State */}
+      {filteredAppointments.length === 0 && (
+        <Card className="text-center py-12 shadow-lg border-0">
+          <CalendarIcon className="mx-auto h-16 w-16 text-gray-300 mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No appointments found</h3>
+          <p className="text-gray-500 mb-6">
+            {searchTerm || dateFilter !== 'all' || statusFilter !== 'all' 
+              ? 'Try adjusting your filters or search term.' 
+              : 'Create your first appointment to get started.'}
+          </p>
+          <Button 
+            onClick={() => setIsAddAppointmentModalOpen(true)}
+            className="bg-gradient-to-r from-blue-600 to-indigo-600"
+          >
+            Add New Appointment
+          </Button>
+        </Card>
+      )}
+
+      {/* Enhanced Add Appointment Modal */}
       <Modal
         isOpen={isAddAppointmentModalOpen}
         onClose={() => setIsAddAppointmentModalOpen(false)}
         title="Add New Appointment"
-        primaryActionLabel="Add"
+        primaryActionLabel="Create Appointment"
         onPrimaryAction={handleAddAppointment}
+        size="lg"
       >
-        <div className="space-y-4">
+        <div className="space-y-6">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h4 className="font-medium text-blue-900 mb-1">New Appointment</h4>
+            <p className="text-sm text-blue-600">Fill in the details below to create a new appointment.</p>
+          </div>
+          
           <Input
             label="Client Name"
             value={newAppointment.clientName}
             onChange={(e) => setNewAppointment({ ...newAppointment, clientName: e.target.value })}
             required
           />
+          
           <Select
             label="Service"
             options={serviceOptions}
             value={services.find(s => s.name === newAppointment.service)?.id || ''}
             onChange={handleServiceChange}
           />
+          
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="Date"
@@ -607,6 +843,7 @@ export default function Appointments() {
               required
             />
           </div>
+          
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="Duration (minutes)"
@@ -623,6 +860,7 @@ export default function Appointments() {
               disabled
             />
           </div>
+          
           <Select
             label="Staff Member"
             options={getAvailableStaff(services.find(s => s.name === newAppointment.service)?.id || '')}
@@ -632,26 +870,31 @@ export default function Appointments() {
         </div>
       </Modal>
 
-      {/* Edit Appointment Modal */}
+      {/* Enhanced Edit Appointment Modal */}
       <Modal
         isOpen={isEditAppointmentModalOpen}
         onClose={() => setIsEditAppointmentModalOpen(false)}
         title="Edit Appointment"
         primaryActionLabel="Save Changes"
         onPrimaryAction={handleEditAppointment}
+        size="lg"
       >
-        <div className="space-y-4">
+        <div className="space-y-6">
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <h4 className="font-medium text-amber-900 mb-1">Edit Appointment</h4>
+            <p className="text-sm text-amber-600">Update the appointment details below.</p>
+          </div>
+          
           <Input
             label="Service"
-            id="service"
             value={editAppointment.service}
             onChange={(e) => setEditAppointment({ ...editAppointment, service: e.target.value })}
             error={!editAppointment.service.trim() ? "Service is required" : ""}
           />
+          
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="Date"
-              id="date"
               type="date"
               value={editAppointment.date}
               onChange={(e) => setEditAppointment({ ...editAppointment, date: e.target.value })}
@@ -659,37 +902,35 @@ export default function Appointments() {
             />
             <Input
               label="Time"
-              id="time"
               value={editAppointment.time}
               onChange={(e) => setEditAppointment({ ...editAppointment, time: e.target.value })}
               error={!editAppointment.time.trim() ? "Time is required" : ""}
             />
           </div>
+          
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="Duration (minutes)"
-              id="duration"
               type="number"
               value={editAppointment.duration.toString()}
               onChange={(e) => setEditAppointment({ ...editAppointment, duration: parseInt(e.target.value) || 0 })}
             />
             <Input
               label="Price ($)"
-              id="price"
               type="number"
               value={editAppointment.price.toString()}
               onChange={(e) => setEditAppointment({ ...editAppointment, price: parseInt(e.target.value) || 0 })}
             />
           </div>
+          
           <Input
             label="Staff Member"
-            id="staffName"
             value={editAppointment.staffName}
             onChange={(e) => setEditAppointment({ ...editAppointment, staffName: e.target.value })}
           />
+          
           <Select
             label="Status"
-            id="status"
             options={appointmentStatusOptions}
             value={editAppointment.status}
             onChange={(value) => setEditAppointment({ ...editAppointment, status: value as Appointment['status'] })}
@@ -706,4 +947,4 @@ export default function Appointments() {
       />
     </div>
   );
-} 
+}

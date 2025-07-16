@@ -1,71 +1,11 @@
 import { useState } from 'react';
 import { Modal, Alert, Button, Input, Select, Card } from '../components/common';
+import { useSettings } from '../context/SettingsContext';
 
-interface ShopSettings {
-  shopName: string;
-  address: string;
-  phone: string;
-  email: string;
-  website: string;
-  openingHours: {
-    monday: string;
-    tuesday: string;
-    wednesday: string;
-    thursday: string;
-    friday: string;
-    saturday: string;
-    sunday: string;
-  };
-  socialMedia: {
-    facebook: string;
-    instagram: string;
-    twitter: string;
-  };
-  notifications: {
-    emailReminders: boolean;
-    smsReminders: boolean;
-    appointmentConfirmation: boolean;
-    marketingEmails: boolean;
-  };
-  appearance: {
-    theme: 'light' | 'dark' | 'system';
-    primaryColor: string;
-  };
-}
 
 export default function Settings() {
-  const [settings, setSettings] = useState<ShopSettings>({
-    shopName: 'Classic Barber Shop',
-    address: '123 Main Street, City, State 12345',
-    phone: '(555) 123-4567',
-    email: 'contact@barber.com',
-    website: 'www.classicbarbershop.com',
-    openingHours: {
-      monday: '9:00 AM - 7:00 PM',
-      tuesday: '9:00 AM - 7:00 PM',
-      wednesday: '9:00 AM - 7:00 PM',
-      thursday: '9:00 AM - 7:00 PM',
-      friday: '9:00 AM - 8:00 PM',
-      saturday: '10:00 AM - 6:00 PM',
-      sunday: 'Closed',
-    },
-    socialMedia: {
-      facebook: 'facebook.com/classicbarbershop',
-      instagram: 'instagram.com/classicbarbershop',
-      twitter: 'twitter.com/classicbarber',
-    },
-    notifications: {
-      emailReminders: true,
-      smsReminders: true,
-      appointmentConfirmation: true,
-      marketingEmails: false,
-    },
-    appearance: {
-      theme: 'light',
-      primaryColor: '#f97316', // orange-600
-    },
-  });
-
+  
+  const { settings, updateSettings } = useSettings();
   const [activeTab, setActiveTab] = useState('general');
   const [isSaving, setIsSaving] = useState(false);
   const [showSavedMessage, setShowSavedMessage] = useState(false);
@@ -73,7 +13,7 @@ export default function Settings() {
 
   const handleGeneralInfoChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setSettings({
+    updateSettings({
       ...settings,
       [name]: value,
     });
@@ -81,8 +21,7 @@ export default function Settings() {
 
   const handleOpeningHoursChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setSettings({
-      ...settings,
+    updateSettings({
       openingHours: {
         ...settings.openingHours,
         [name]: value,
@@ -92,8 +31,7 @@ export default function Settings() {
 
   const handleSocialMediaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setSettings({
-      ...settings,
+    updateSettings({
       socialMedia: {
         ...settings.socialMedia,
         [name]: value,
@@ -103,8 +41,7 @@ export default function Settings() {
 
   const handleNotificationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target;
-    setSettings({
-      ...settings,
+    updateSettings({
       notifications: {
         ...settings.notifications,
         [name]: checked,
@@ -112,9 +49,8 @@ export default function Settings() {
     });
   };
 
-  const handleThemeChange = (value: string) => {
-    setSettings({
-      ...settings,
+ const handleThemeChange = (value: string) => {
+    updateSettings({
       appearance: {
         ...settings.appearance,
         theme: value as 'light' | 'dark' | 'system',
@@ -123,8 +59,7 @@ export default function Settings() {
   };
 
   const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSettings({
-      ...settings,
+    updateSettings({
       appearance: {
         ...settings.appearance,
         primaryColor: e.target.value,
@@ -136,20 +71,24 @@ export default function Settings() {
     setIsConfirmModalOpen(true);
   };
 
-  const handleSaveSettings = () => {
-    setIsConfirmModalOpen(false);
-    setIsSaving(true);
+  // In your Settings.tsx, modify the handleSaveSettings function:
+const handleSaveSettings = () => {
+  setIsConfirmModalOpen(false);
+  setIsSaving(true);
+  
+  // Here we don't need to do anything special because:
+  // 1. All changes are already in context state via updateSettings
+  // 2. The context automatically persists to localStorage
+  
+  setTimeout(() => {
+    setIsSaving(false);
+    setShowSavedMessage(true);
     
-    // Simulate API call
     setTimeout(() => {
-      setIsSaving(false);
-      setShowSavedMessage(true);
-      
-      setTimeout(() => {
-        setShowSavedMessage(false);
-      }, 3000);
-    }, 1000);
-  };
+      setShowSavedMessage(false);
+    }, 3000);
+  }, 1000);
+};
 
   const themeOptions = [
     { value: 'light', label: 'Light' },
@@ -429,13 +368,13 @@ export default function Settings() {
             <div className="space-y-6">
               <div className="grid grid-cols-6 gap-6">
                 <div className="col-span-6 sm:col-span-3">
-                  <Select
-                    label="Theme"
-                    id="theme"
-                    options={themeOptions}
-                    value={settings.appearance.theme}
-                    onChange={handleThemeChange}
-                  />
+                <Select
+  label="Theme"
+  id="theme"
+  options={themeOptions}
+  value={settings.appearance.theme}
+  onChange={handleThemeChange}
+/>
                 </div>
                 
                 <div className="col-span-6 sm:col-span-3">
